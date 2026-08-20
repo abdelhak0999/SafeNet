@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CVE History Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>🛡️ CVE Vulnerability History</h1>
+    <div class="nav-links">
+        <a href="/">← Back to Device Inventory</a>
+    </div>
+
+    {% if error %}
+    <div class="error-box">
+        <strong>Error:</strong> {{ error }}
+    </div>
+    {% endif %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>MAC Address</th>
+                <th>CVE ID</th>
+                <th>Service</th>
+                <th>Version</th>
+                <th>CVSS Score</th>
+                <th>Status</th>
+                <th>Detected</th>
+                <th>Last Seen</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cve in cves %}
+            <tr class="status-{{ cve['status'] }}">
+                <td>{{ cve['mac_address'] }}</td>
+                <td><strong>{{ cve['cve_id'] }}</strong></td>
+                <td>{{ cve['service_name'] }}</td>
+                <td>{{ cve['version_affected'] }}</td>
+                <td>
+                    {% set score = cve['cvss_score'] %}
+                    {% if score >= 7.0 %}
+                        <span class="severity-critical">{{ score }}</span>
+                    {% elif score >= 4.0 %}
+                        <span class="severity-medium">{{ score }}</span>
+                    {% else %}
+                        <span class="severity-low">{{ score }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ cve['status'] }}</td>
+                <td>{{ cve['detected_at'] }}</td>
+                <td>{{ cve['last_seen_at'] }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="empty-msg">No CVEs found in history.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

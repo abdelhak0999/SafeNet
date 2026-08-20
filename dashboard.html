@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Inventory Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Live Network Inventory</h1>
+    <div class="nav-links">
+        <a href="/cves">View CVE History →</a>
+    </div>
+
+    {% if error %}
+    <div class="error-box">
+        <strong>Error:</strong> {{ error }}
+    </div>
+    {% endif %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>Status</th>
+                <th>MAC Address</th>
+                <th>IP Address</th>
+                <th>Hostname</th>
+                <th>OS</th>
+                <th>Last Seen</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for device in devices %}
+            <tr class="status-{{ device['status'] }}">
+                <td>{{ device['status'] }}</td>
+                <td>{{ device['mac_address'] }}</td>
+                <td>{{ device['expected_ip'] }}</td>
+                <td>{{ device['hostname'] }}</td>
+                <td>{{ device['os'] }}</td>
+                <td>{{ device['last_seen'] }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="empty-msg">No devices found in inventory.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
