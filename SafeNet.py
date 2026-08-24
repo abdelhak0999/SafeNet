@@ -6,7 +6,7 @@ import argparse
 import requests
 import json
 
-# --- DYNAMIC ARGUMENT PARSING ---
+#PARSING
 parser = argparse.ArgumentParser(description="Dynamic Network Inventory Scanner")
 parser.add_argument("--network", type=str, default="192.168.122.0/24", 
                     help="The subnet to scan (e.g., 192.168.1.0/24)")
@@ -17,13 +17,12 @@ parser.add_argument("--mode", type=str, choices=['fast', 'full'], default='fast'
 
 args = parser.parse_args()
 
-# Assign arguments to global variables used by the functions
 NETWORK = args.network 
 DB_PASSWORD = args.password
 SCAN_MODE = args.mode
 
 
-# --- FUNCTION 1: CONNECT TO DATABASE ---
+#CONNECT TO DATABASE
 def connect_db():
     try:
         conn = mysql.connector.connect(
@@ -39,21 +38,19 @@ def connect_db():
         sys.exit(1)
 
 
-# --- FUNCTION 2: DYNAMIC NETWORK SCAN ---
+#NETWORK SCAN
 def scan_network():
     print(f"starting scan in {SCAN_MODE} mode...")
     nm = nmap.PortScanner() 
 
-    # Base flags: OS detection, version detection, SYN scan, aggressive timing
+    #OS detection, version detection, SYN scan, aggressive timing
     base_args = '-O --osscan-guess -sS -sV -T4 --osscan-limit'
     
-    # Dynamically change port range based on --mode argument
     if SCAN_MODE == 'fast':
-        final_args = base_args + ' -F'  # -F: Scan only the top 100 ports (fast)
+        final_args = base_args + ' -F'  # -F: Scan only the top 100 ports
     else:
-        final_args = base_args + ' -p-' # -p-: Scan ALL 65535 ports (full/deep)
+        final_args = base_args + ' -p-' # -p-: Scan ALL 65535 ports
 
-    # Execute the scan
     nm.scan(hosts=NETWORK, arguments=final_args)
 
     devices = []  
@@ -67,7 +64,6 @@ def scan_network():
         if 'osmatch' in nm[host] and nm[host]['osmatch']:
             os_guess = nm[host]['osmatch'][0]['name']
 
-        # Extract Service Versions for CVE Checking
         services = []
         if mac != 'UNKNOWN':
             for proto in nm[host].all_protocols():
@@ -93,7 +89,6 @@ def scan_network():
                 'services': services
             }
             
-            # DEBUG PRINT TO PROVE OS IS BEING CAPTURED
             print(f"    [DEBUG] Storing OS for {ip}: {os_guess}")
             
             devices.append(device)
@@ -107,7 +102,6 @@ def scan_network():
     return devices
 
 
-# --- FUNCTION 3: RECONCILE WITH DATABASE ---
 def reconcile_inventory(conn, found_devices):
     print("Reconciling inventory with database...")
     cursor = conn.cursor()
@@ -128,9 +122,8 @@ def reconcile_inventory(conn, found_devices):
             expected_ip = result[0]
             if ip == expected_ip:
                 cursor.execute("UPDATE authorized_devices SET last_seen = NOW() WHERE mac_address = %s", (mac,))
-                print(f"✅ VALIDATED: {mac} is at {ip}")
+                print(f"VALIDATED: {mac} is at {ip}")
             else:
-                # UPDATE with OS included
                 cursor.execute("""
                     UPDATE authorized_devices 
                     SET expected_ip = %s, os = %s, status = 'Departed', last_seen = NOW() 
@@ -159,13 +152,13 @@ def reconcile_inventory(conn, found_devices):
                     VALUES (%s, %s, %s, %s, 'Rogue', NOW())
                 """, (mac, ip, hostname, os_guess))
                 new_device_count += 1
-                print(f"🆕 NEW DEVICE: {mac} added to inventory on {ip}")
+                print(f"NEW DEVICE: {mac} added to inventory on {ip}")
                 
     conn.commit()
     print(f"\nSummary: {new_device_count} new devices, {intrusion_count} intrusions detected.\n")
 
 
-# --- FUNCTION 4: CHECK CVEs USING NIST API ---
+#CHECK CVEs USING NIST API
 def check_cves(conn, devices):
     print("Checking services against NIST CVE database...")
     cursor = conn.cursor()
@@ -236,13 +229,12 @@ def check_cves(conn, devices):
                             (mac_address, cve_id, service_name, version_affected, cvss_score, status)
                             VALUES (%s, %s, %s, %s, %s, 'Open')
                         """, (mac, cve_id, service_name, version, cvss))
-                        print(f"        ⚠️ New Vulnerability Found: {cve_id} (Score: {cvss}) on {mac}")
+                        print(f"        New Vulnerability Found: {cve_id} (Score: {cvss}) on {mac}")
                         
     conn.commit()
     print("CVE check complete.\n")
 
 
-# --- MAIN EXECUTION BLOCK ---
 if __name__ == "__main__":
     print("--- STEP 1: CONNECTING TO DATABASE ---")
     db_connection = connect_db()
