@@ -49,11 +49,11 @@ for file_path in FILES:
     code = result.stdout.strip()
     
     if code == "200":
-        print(f"    [✅] SUCCESS! Saved to {output_dir}/")
+        print(f"    SUCCESS! Saved to {output_dir}/")
     elif code == "403":
-        print(f"    [⚠️] Forbidden! Exists but blocked.")
+        print(f"    Forbidden! Exists but blocked.")
     else:
-        print(f"    [❌] Not found.")
+        print(f"    Not found.")
         
 print(f"\n[+] Exfiltration complete. Check the '{output_dir}' folder for loot.")
 
